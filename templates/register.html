@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}CodeEditor – Register{% endblock %}
+
+{% block content %}
+<div class="container d-flex align-items-center justify-content-center" style="min-height: 80vh;">
+    <div class="auth-card p-4 rounded border border-secondary bg-dark shadow-lg" style="width: 100%; max-width: 400px;">
+        <h2 class="h4 text-center mb-4 text-light fw-bold">
+            <i class="bi bi-person-plus me-2 text-info"></i>Register
+        </h2>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-danger py-2 small mb-3">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <div class="mb-3">
+                <label for="username" class="form-label small text-muted text-uppercase fw-bold">Username</label>
+                <input type="text" name="username" id="username" class="form-control bg-dark text-light border-secondary" required autofocus>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label small text-muted text-uppercase fw-bold">Password</label>
+                <input type="password" name="password" id="password" class="form-control bg-dark text-light border-secondary" required>
+            </div>
+            <div class="mb-4">
+                <label for="confirm_password" class="form-label small text-muted text-uppercase fw-bold">Confirm Password</label>
+                <input type="password" name="confirm_password" id="confirm_password" class="form-control bg-dark text-light border-secondary" required>
+            </div>
+            <button type="submit" class="btn btn-info w-100 text-dark fw-bold mb-3">Register</button>
+        </form>
+
+        <p class="text-center text-muted small mb-0">
+            Already have an account? <a href="{{ url_for('login') }}" class="text-info text-decoration-none">Login</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

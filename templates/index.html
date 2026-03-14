@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block title %}CodeEditor – Write &amp; Run Code{% endblock %}
+
+{% block content %}
+<!--
+    index.html – Main 3-panel editor layout (VS Code style)
+    Panels: Left Sidebar | Center Editor | Bottom Output
+-->
+
+<!-- Hidden save form (submitted via jQuery) -->
+<form id="saveForm" method="POST" action="{{ url_for('save_snippet') }}" style="display:none;">
+    <input type="hidden" name="filename" id="hiddenFilename" />
+    <input type="hidden" name="language" id="hiddenLanguage" />
+    <input type="hidden" name="code"     id="hiddenCode"     />
+</form>
+
+<!-- ============================================================
+     EDITOR LAYOUT WRAPPER
+============================================================ -->
+<div class="editor-layout d-flex" style="height: calc(100vh - 110px);">
+
+    <!-- --------------------------------------------------------
+         LEFT SIDEBAR – Saved Files
+    -------------------------------------------------------- -->
+    <aside class="sidebar d-flex flex-column border-end border-secondary">
+        <div class="sidebar-header p-2 border-bottom border-secondary">
+            <small class="text-uppercase text-muted fw-bold">
+                <i class="bi bi-folder2-open me-1"></i>Explorer
+            </small>
+        </div>
+        <nav class="sidebar-files flex-grow-1 overflow-auto p-1">
+            {% if all_snippets %}
+                <ul class="list-unstyled mb-0">
+                    {% for s in all_snippets %}
+                    <li>
+                        <a href="{{ url_for('index', id=s.id) }}"
+                           class="sidebar-file-link d-flex align-items-center px-2 py-1 rounded text-decoration-none
+                                  {% if snippet and snippet.id == s.id %}active-file{% endif %}"
+                           title="{{ s.filename }} ({{ s.language }})">
+                            <!-- Language icon -->
+                            {% if s.language == 'python' %}
+                                <i class="bi bi-filetype-py me-2 text-warning"></i>
+                            {% elif s.language == 'javascript' %}
+                                <i class="bi bi-filetype-js me-2 text-warning"></i>
+                            {% elif s.language == 'html' %}
+                                <i class="bi bi-filetype-html me-2 text-danger"></i>
+                            {% else %}
+                                <i class="bi bi-filetype-css me-2 text-info"></i>
+                            {% endif %}
+                            <span class="text-truncate small">{{ s.filename }}</span>
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted small text-center mt-3 px-2">
+                    No saved files yet.<br>Save a snippet to see it here.
+                </p>
+            {% endif %}
+        </nav>
+    </aside>
+
+    <!-- --------------------------------------------------------
+         CENTER + BOTTOM: Editor Pane
+    -------------------------------------------------------- -->
+    <section class="editor-pane d-flex flex-column flex-grow-1 overflow-hidden">
+
+        <!-- ---- TOOLBAR ---- -->
+        <div class="toolbar d-flex align-items-center gap-2 px-3 py-2 border-bottom border-secondary flex-wrap">
+
+            <!-- File name input -->
+            <div class="input-group input-group-sm" style="max-width:220px;">
+                <span class="input-group-text bg-dark border-secondary text-muted">
+                    <i class="bi bi-file-earmark-code"></i>
+                </span>
+                <input type="text"
+                       id="filenameInput"
+                       class="form-control bg-dark border-secondary text-light"
+                       placeholder="filename.py"
+                       value="{{ snippet.filename if snippet else '' }}"
+                       maxlength="100" />
+            </div>
+
+            <!-- Language selector -->
+            <select id="languageSelect"
+                    class="form-select form-select-sm bg-dark border-secondary text-light"
+                    style="max-width:150px;">
+                <option value="python"     {% if snippet and snippet.language == 'python'     %}selected{% endif %}>Python</option>
+                <option value="javascript" {% if snippet and snippet.language == 'javascript' %}selected{% endif %}>JavaScript</option>
+                <option value="html"       {% if snippet and snippet.language == 'html'       %}selected{% endif %}>HTML</option>
+                <option value="css"        {% if snippet and snippet.language == 'css'        %}selected{% endif %}>CSS</option>
+            </select>
+
+            <!-- Action buttons -->
+            <button id="runBtn"
+                    class="btn btn-sm btn-success d-flex align-items-center gap-1"
+                    title="Run code or Preview HTML/CSS">
+                <span id="runBtnIcon"><i class="bi bi-play-fill"></i></span>
+                <span id="runBtnText">Run</span>
+            </button>
+
+            <button id="saveBtn"
+                    class="btn btn-sm btn-primary d-flex align-items-center gap-1"
+                    title="Save snippet to database">
+                <i class="bi bi-floppy2-fill"></i> Save
+            </button>
+
+            <button id="clearBtn"
+                    class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1"
+                    title="Clear editor">
+                <i class="bi bi-x-circle"></i> Clear
+            </button>
+
+            <button id="copyBtn"
+                    class="btn btn-sm btn-outline-info d-flex align-items-center gap-1 ms-auto"
+                    title="Copy code to clipboard">
+                <i class="bi bi-clipboard"></i>
+                <span id="copyBtnText">Copy Code</span>
+            </button>
+        </div>
+
+        <!-- ---- VALIDATION ALERT (hidden by default) ---- -->
+        <div id="validationAlert" class="alert alert-warning alert-dismissible fade show m-2 py-2 d-none" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span id="validationMsg">Please enter a file name.</span>
+            <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- ---- EDITOR + LINE INFO BAR ---- -->
+        <div class="flex-grow-1 overflow-hidden position-relative">
+            <!-- Tab bar (cosmetic, like VS Code) -->
+            <div class="editor-tab-bar d-flex align-items-center px-3 border-bottom border-secondary">
+                <span class="editor-tab active-tab small px-3 py-1">
+                    <i class="bi bi-circle-fill me-1 text-warning" style="font-size:6px;vertical-align:middle;"></i>
+                    <span id="tabFilename">{{ snippet.filename if snippet else 'untitled.py' }}</span>
+                </span>
+            </div>
+
+            <!-- CodeMirror textarea -->
+            <textarea id="codeEditor">{{ snippet.code if snippet else '' }}</textarea>
+        </div>
+
+        <!-- ---- STATUS BAR (VS Code-style bottom bar) ---- -->
+        <div class="status-bar d-flex align-items-center px-3 gap-3 border-top border-secondary">
+            <small class="text-muted">
+                <i class="bi bi-list-ol me-1"></i>
+                Lines: <span id="lineCount">1</span>
+            </small>
+            <small class="text-muted ms-auto" id="statusMsg">
+                Ready
+            </small>
+        </div>
+
+        <!-- ---- OUTPUT PANEL ---- -->
+        <section class="output-panel border-top border-secondary">
+            <div class="output-header d-flex align-items-center px-3 py-1 border-bottom border-secondary">
+                <small class="text-uppercase text-muted fw-bold me-auto">
+                    <i class="bi bi-terminal me-1"></i>Output
+                </small>
+                <button id="clearOutputBtn"
+                        class="btn btn-sm btn-link text-muted p-0"
+                        title="Clear output">
+                    <i class="bi bi-trash3"></i>
+                </button>
+            </div>
+            <div class="output-body flex-grow-1 overflow-hidden">
+                <pre id="output" class="output-pre m-0 p-3 h-100"><span class="text-muted">// Run your code to see output here...</span></pre>
+                <!-- Live preview for HTML/CSS -->
+                <iframe id="webPreview" class="d-none w-100 h-100 bg-white border-0"></iframe>
+            </div>
+        </section>
+
+    </section><!-- end .editor-pane -->
+</div><!-- end .editor-layout -->
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+    /* ------------------------------------------------------------------
+       Inline: pass Jinja2 snippet data to script.js cleanly via JSON
+    ------------------------------------------------------------------ */
+    window.SNIPPET_CODE = {{ (snippet.code | tojson) if snippet else '""' }};
+    window.SNIPPET_LANG = {{ (snippet.language | tojson) if snippet else '"python"' }};
+</script>
+{% endblock %}

@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}CodeEditor – Saved Snippets{% endblock %}
+
+{% block content %}
+<!--
+    saved.html – Saved code snippets management page
+    Shows a Bootstrap table with all saved snippets and action buttons
+-->
+
+<div class="container-fluid py-4 px-4">
+
+    <!-- Page Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="h3 fw-bold text-light mb-0">
+                <i class="bi bi-archive-fill me-2 text-primary"></i>Saved Snippets
+            </h1>
+            <p class="text-muted small mb-0 mt-1">All your saved code files are listed below.</p>
+        </div>
+        <a href="{{ url_for('index') }}" class="btn btn-sm btn-outline-info">
+            <i class="bi bi-plus-circle me-1"></i>New Snippet
+        </a>
+    </div>
+
+    <!-- --------------------------------------------------------
+         SNIPPETS TABLE
+    -------------------------------------------------------- -->
+    {% if snippets %}
+    <div class="table-responsive rounded border border-secondary">
+        <table class="table table-dark table-hover table-bordered align-middle mb-0">
+            <thead class="table-header-dark">
+                <tr>
+                    <th scope="col" style="width:60px;">#</th>
+                    <th scope="col"><i class="bi bi-file-earmark-code me-1"></i>File Name</th>
+                    <th scope="col"><i class="bi bi-code-slash me-1"></i>Language</th>
+                    <th scope="col"><i class="bi bi-calendar3 me-1"></i>Date Saved</th>
+                    <th scope="col" style="width:180px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in snippets %}
+                <tr>
+                    <!-- ID -->
+                    <td class="text-muted">{{ s.id }}</td>
+
+                    <!-- File Name -->
+                    <td>
+                        <i class="bi bi-file-earmark-text me-2 text-secondary"></i>
+                        <span class="fw-semibold text-light">{{ s.filename }}</span>
+                    </td>
+
+                    <!-- Language Badge -->
+                    <td>
+                        {% if s.language == 'python' %}
+                            <span class="badge bg-warning text-dark">
+                                <i class="bi bi-filetype-py me-1"></i>Python
+                            </span>
+                        {% elif s.language == 'javascript' %}
+                            <span class="badge bg-warning text-dark">
+                                <i class="bi bi-filetype-js me-1"></i>JavaScript
+                            </span>
+                        {% elif s.language == 'html' %}
+                            <span class="badge bg-danger">
+                                <i class="bi bi-filetype-html me-1"></i>HTML
+                            </span>
+                        {% elif s.language == 'css' %}
+                            <span class="badge bg-info text-dark">
+                                <i class="bi bi-filetype-css me-1"></i>CSS
+                            </span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ s.language }}</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Date Saved -->
+                    <td class="text-muted small">
+                        <i class="bi bi-clock me-1"></i>
+                        {{ s.created_at.strftime('%Y-%m-%d %H:%M') }}
+                    </td>
+
+                    <!-- Actions -->
+                    <td>
+                        <div class="d-flex gap-2">
+                            <!-- Load button: navigate back to editor -->
+                            <a href="{{ url_for('index', id=s.id) }}"
+                               class="btn btn-sm btn-outline-success"
+                               title="Load this snippet in the editor">
+                                <i class="bi bi-pencil-square me-1"></i>Load
+                            </a>
+
+                            <!-- Delete button: submits a hidden form after jQuery confirm -->
+                            <form class="delete-form d-inline"
+                                  method="POST"
+                                  action="{{ url_for('delete_snippet', snippet_id=s.id) }}">
+                                <button type="submit"
+                                        class="btn btn-sm btn-outline-danger delete-btn"
+                                        data-filename="{{ s.filename }}"
+                                        title="Delete this snippet">
+                                    <i class="bi bi-trash3 me-1"></i>Delete
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Snippet count -->
+    <p class="text-muted small mt-2">
+        <i class="bi bi-info-circle me-1"></i>
+        {{ snippets | length }} snippet{{ 's' if snippets | length != 1 else '' }} saved.
+    </p>
+
+    {% else %}
+    <!-- --------------------------------------------------------
+         EMPTY STATE
+    -------------------------------------------------------- -->
+    <div class="empty-state text-center py-5">
+        <i class="bi bi-journal-x display-1 text-muted opacity-50"></i>
+        <h2 class="h5 text-muted mt-3">No snippets saved yet</h2>
+        <p class="text-muted">Head over to the editor, write some code, and hit <strong>Save</strong>.</p>
+        <a href="{{ url_for('index') }}" class="btn btn-primary mt-2">
+            <i class="bi bi-pencil-square me-1"></i>Go to Editor
+        </a>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

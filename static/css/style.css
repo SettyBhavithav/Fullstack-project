@@ -1,0 +1,313 @@
+/*
+ * style.css — Custom styles for CodeEditor (VS Code Dark Theme)
+ * Minimal overrides on top of Bootstrap 5 dark theme.
+ * All layout uses Bootstrap grid; only cosmetic tweaks here.
+ */
+
+/* ======================================================================
+   1. BASE / BODY
+====================================================================== */
+body {
+    background-color: #1e1e1e;   /* VS Code dark background */
+    color: #d4d4d4;
+    font-family: 'Segoe UI', 'Inter', system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+    overflow: hidden;
+}
+
+/* ======================================================================
+   2. NAVBAR / BRAND
+====================================================================== */
+.navbar {
+    background-color: #1f1f1f !important;
+}
+
+.brand-logo {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #d4d4d4 !important;
+    transition: color 0.2s;
+}
+
+.brand-logo:hover {
+    color: #9cdcfe !important;
+}
+
+/* ======================================================================
+   3. EDITOR LAYOUT
+====================================================================== */
+.editor-layout {
+    background-color: #1e1e1e;
+    overflow: hidden;
+}
+
+/* ======================================================================
+   4. LEFT SIDEBAR
+====================================================================== */
+.sidebar {
+    background-color: #252526;
+    width: 220px;
+    min-width: 180px;
+    flex-shrink: 0;
+}
+
+.sidebar-header {
+    background-color: #2d2d30;
+}
+
+/* Individual file link in sidebar */
+.sidebar-file-link {
+    color: #cccccc;
+    font-size: 0.8rem;
+    transition: background-color 0.15s;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.sidebar-file-link:hover {
+    background-color: #2a2d2e;
+    color: #ffffff;
+}
+
+.sidebar-file-link.active-file {
+    background-color: #37373d;
+    color: #ffffff;
+}
+
+.sidebar-files {
+    scrollbar-width: thin;
+    scrollbar-color: #424242 #252526;
+}
+
+/* ======================================================================
+   5. TOOLBAR
+====================================================================== */
+.toolbar {
+    background-color: #2d2d30;
+    min-height: 48px;
+}
+
+/* ======================================================================
+   6. EDITOR TAB BAR (cosmetic VS Code-like tabs)
+====================================================================== */
+.editor-tab-bar {
+    background-color: #2d2d30;
+    height: 35px;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.editor-tab {
+    display: inline-flex;
+    align-items: center;
+    color: #9d9d9d;
+    font-size: 0.8rem;
+    border-right: 1px solid #3f3f46;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.active-tab {
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    border-top: 1px solid #007acc;
+}
+
+/* ======================================================================
+   7. CODEMIRROR EDITOR
+====================================================================== */
+.CodeMirror {
+    height: calc(100vh - 370px); /* Responsive height accounting for panels */
+    min-height: 200px;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    background-color: #1e1e1e;
+}
+
+.CodeMirror-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #424242 #1e1e1e;
+}
+
+.CodeMirror-gutters {
+    background-color: #1e1e1e;
+    border-right: 1px solid #333333;
+}
+
+.CodeMirror-linenumber {
+    color: #5a5a5a;
+}
+
+/* ======================================================================
+   8. STATUS BAR
+====================================================================== */
+.status-bar {
+    background-color: #007acc;   /* VS Code blue status bar */
+    color: #ffffff;
+    height: 24px;
+    font-size: 0.75rem;
+}
+
+.status-bar .text-muted {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* ======================================================================
+   9. OUTPUT PANEL
+====================================================================== */
+.output-panel {
+    background-color: #1e1e1e;
+    flex-shrink: 0;
+}
+
+.output-header {
+    background-color: #252526;
+    height: 30px;
+}
+
+.output-body {
+    overflow-y: auto;
+    max-height: 160px;
+    min-height: 80px;
+    scrollbar-width: thin;
+    scrollbar-color: #424242 #1e1e1e;
+}
+
+.output-pre {
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-all;
+    min-height: 60px;
+}
+
+/* Output: error text (VS Code red) */
+.output-error {
+    color: #f44747;
+}
+
+/* Output: success text (VS Code teal) */
+.output-success {
+    color: #4ec9b0;
+}
+
+/* ======================================================================
+   10. FOOTER
+====================================================================== */
+.footer-bar {
+    background-color: #1f1f1f;
+    font-size: 0.78rem;
+    flex-shrink: 0;
+}
+
+/* ======================================================================
+   11. SAVED PAGE — TABLE
+====================================================================== */
+.table th {
+    background-color: #252526;
+    color: #9d9d9d;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    border-color: #3f3f46;
+}
+
+.table td {
+    border-color: #2d2d30;
+    font-size: 0.88rem;
+}
+
+.table tbody tr:hover {
+    background-color: #2a2d2e;
+}
+
+/* ======================================================================
+   12. EMPTY STATE
+====================================================================== */
+.empty-state {
+    color: #555;
+}
+
+/* ======================================================================
+   13. CUSTOM SCROLLBARS (Webkit)
+====================================================================== */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1e1e1e;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #424242;
+    border-radius: 4px;
+    border: 2px solid #1e1e1e;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #555555;
+}
+
+/* ======================================================================
+   14. MISC UTILITIES
+====================================================================== */
+/* Ensure Bootstrap form controls inherit dark styling properly */
+.form-control:focus,
+.form-select:focus {
+    border-color: #007acc;
+    box-shadow: 0 0 0 0.15rem rgba(0, 122, 204, 0.3);
+}
+
+/* Loading spinner (when Run is clicked) */
+.spinner-border-sm {
+    width: 0.9rem;
+    height: 0.9rem;
+}
+/* ======================================================================
+   15. AUTH PAGES (Login/Register)
+====================================================================== */
+.auth-card {
+    background-color: #252526 !important;
+    border-color: #3f3f46 !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    transition: transform 0.2s ease;
+}
+
+.auth-card:hover {
+    transform: translateY(-5px);
+}
+
+.auth-card .form-control {
+    background-color: #1e1e1e !important;
+    border-color: #3f3f46 !important;
+    color: #d4d4d4 !important;
+}
+
+.auth-card .form-control:focus {
+    border-color: #007acc !important;
+    box-shadow: 0 0 0 0.15rem rgba(0, 122, 204, 0.25) !important;
+}
+
+.auth-card .btn-info {
+    background-color: #007acc !important;
+    border-color: #007acc !important;
+    color: #ffffff !important;
+}
+
+.auth-card .btn-info:hover {
+    background-color: #0062a3 !important;
+    border-color: #0062a3 !important;
+}
