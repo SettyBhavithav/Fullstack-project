@@ -6,11 +6,16 @@ A fully functional, browser-based code editor built with **Flask** and **CodeMir
 
 ## 📸 Screenshots
 
-> _Add your screenshots here_
-
 | Editor (3-Panel Layout) | Saved Snippets Page |
 |---|---|
-| _(screenshot)_ | _(screenshot)_ |
+| ![Editor Demo](screenshots/editor_demo.png) | ![Saved Snippets Demo](screenshots/saved_snippets_demo.png) |
+
+---
+
+## 🔑 Demo Account
+To test the application quickly, you can use these test credentials:
+- **Username**: `valid_user`
+- **Password**: `password123`
 
 ---
 
