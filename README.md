@@ -1,4 +1,4 @@
-# 🖥️ CodeEditor — Browser-Based VS Code Clone
+#  CodeEditor — Browser-Based VS Code Clone
 
 A fully functional, browser-based code editor built with **Flask** and **CodeMirror 5**, modelled after the VS Code interface. Write, run (Python), and save code snippets directly in your browser.
 
@@ -14,7 +14,7 @@ A fully functional, browser-based code editor built with **Flask** and **CodeMir
 
 ---
 
-## 🛠️ Technologies Used
+##  Technologies Used
 
 | Layer | Technology |
 |---|---|
@@ -28,7 +28,7 @@ A fully functional, browser-based code editor built with **Flask** and **CodeMir
 
 ---
 
-## ⚡ Features
+##  Features
 
 - **User Authentication** — Secure login and registration with password hashing.
 - **Multi-Language Execution** — Executes **Python** and **JavaScript (Node.js)** code.
@@ -42,7 +42,7 @@ A fully functional, browser-based code editor built with **Flask** and **CodeMir
 
 ---
 
-## 🚀 Setup & Deployment
+##  Setup & Deployment
 
 ### Local Development
 1. **Clone & Install**:
@@ -62,7 +62,7 @@ This project includes a **Dockerfile** for seamless deployment on Render.
 
 ---
 
-## 🔒 Security & Limits
+##  Security & Limits
 
 - **Isolation**: Each user only sees their own files.
 - **Limits**: Maximum code size: **5,000 characters**.
