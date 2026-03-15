@@ -19,6 +19,26 @@ To test the application quickly, you can use these test credentials:
 
 ---
 
+## 📝 Step-by-Step Usage Guide
+
+### 1. Register an Account
+Create a new account to get your own private space for saving code snippets.
+![Register Page](screenshots/register_demo.png)
+
+### 2. Log In
+Log in with your newly created credentials.
+![Login Page](screenshots/login_demo.png)
+
+### 3. Write and Run Code
+Use the CodeMirror editor to write Python code and click **Run** to see the output in the terminal below.
+![Editor Demo](screenshots/editor_demo.png)
+
+### 4. Save and Manage Snippets
+Save your code, and access all your saved snippets from the "Saved Files" dashboard.
+![Saved Snippets Demo](screenshots/saved_snippets_demo.png)
+
+---
+
 ##  Technologies Used
 
 | Layer | Technology |
