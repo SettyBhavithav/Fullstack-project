@@ -132,6 +132,15 @@ $(function () {
                 // Reset views
                 outputEl.removeClass('output-error output-success d-none').addClass('d-none');
                 previewEl.addClass('d-none');
+                
+                // --- Complexity UI Update ---
+                if (response.time_complexity && response.time_complexity !== "N/A") {
+                    $('#timeComp').text(response.time_complexity);
+                    $('#spaceComp').text(response.space_complexity);
+                    $('#timeCompContainer, #spaceCompContainer').show();
+                } else {
+                    $('#timeCompContainer, #spaceCompContainer').hide();
+                }
 
                 if (response.is_web) {
                     // Show HTML/CSS preview

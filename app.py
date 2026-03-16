@@ -12,6 +12,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 
+import complexity_analyzer
+
 # ---------------------------------------------------------------------------
 # App Configuration
 # ---------------------------------------------------------------------------
@@ -156,8 +158,8 @@ def index():
 @login_required
 def run_code():
     """
-    Execute submitted Python code using subprocess in a temporary file.
-    Returns JSON with stdout output or stderr error message.
+    Execute submitted code using subprocess in a temp file.
+    Returns JSON with stdout, stderr, and code complexity metrics.
     Security: max 5000 chars, 5-second timeout, temp file cleanup.
     """
     data = request.get_json()
@@ -168,21 +170,33 @@ def run_code():
     if len(code) > 5000:
         return jsonify({'error': 'Code exceeds 5000 character limit.'}), 400
 
-
     # Map languages to execution commands and extensions
     lang_configs = {
         'python': {'cmd': ['python'], 'ext': '.py'},
         'javascript': {'cmd': ['node'], 'ext': '.js'}
     }
 
+    # Calculate complexity (Python only via AST)
+    time_comp = "N/A"
+    space_comp = "N/A"
+    if language == 'python' and code.strip():
+        time_comp, space_comp = complexity_analyzer.analyze_python_complexity(code)
+
     # Handle HTML/CSS (Preview and return early)
     if language in ['html', 'css']:
-        return jsonify({'output': '', 'error': '', 'is_web': True, 'web_code': code})
+        return jsonify({
+            'output': '', 'error': '', 'is_web': True,
+            'web_code': code,
+            'time_complexity': time_comp, 'space_complexity': space_comp
+        })
 
     # For Executable languages (Python, JS)
     config = lang_configs.get(language)
     if not config:
-        return jsonify({'output': '', 'error': f'Execution for {language} is not supported yet.'}), 400
+        return jsonify({
+            'output': '', 'error': f'Execution for {language} is not supported yet.',
+            'time_complexity': time_comp, 'space_complexity': space_comp
+        }), 400
 
     tmp_path = None
     try:
@@ -205,14 +219,14 @@ def run_code():
         stderr = result.stderr
 
         if stderr:
-            return jsonify({'output': stdout, 'error': stderr, 'is_web': False})
-        return jsonify({'output': stdout, 'error': '', 'is_web': False})
+            return jsonify({'output': stdout, 'error': stderr, 'is_web': False, 'time_complexity': time_comp, 'space_complexity': space_comp})
+        return jsonify({'output': stdout, 'error': '', 'is_web': False, 'time_complexity': time_comp, 'space_complexity': space_comp})
 
     except subprocess.TimeoutExpired:
-        return jsonify({'output': '', 'error': 'Code timed out after 5 seconds.', 'is_web': False})
+        return jsonify({'output': '', 'error': 'Code timed out after 5 seconds.', 'is_web': False, 'time_complexity': time_comp, 'space_complexity': space_comp})
 
     except Exception as e:
-        return jsonify({'output': '', 'error': f'Execution error: {str(e)}', 'is_web': False}), 500
+        return jsonify({'output': '', 'error': f'Execution error: {str(e)}', 'is_web': False, 'time_complexity': time_comp, 'space_complexity': space_comp}), 500
 
     finally:
         # Always clean up the temporary file
@@ -275,16 +289,12 @@ def delete_snippet(snippet_id):
 
 
 # ---------------------------------------------------------------------------
-# Entry Point
+# DB Init + Entry Point
 # ---------------------------------------------------------------------------
 with app.app_context():
-    # Auto-create database tables if they don't exist
     db.create_all()
     print("Database tables ensured.")
 
-# ---------------------------------------------------------------------------
-# Entry Point
-# ---------------------------------------------------------------------------
 if __name__ == '__main__':
     print("Starting CodeEditor on http://localhost:5000")
     app.run(debug=True)
