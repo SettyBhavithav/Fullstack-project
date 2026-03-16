@@ -31,7 +31,7 @@ $(function () {
     var initialLang = (window.SNIPPET_LANG || 'python').toLowerCase();
     var initialMode = LANG_MODE_MAP[initialLang] || 'python';
 
-    // Create the editor instance (exposed globally for other scripts)
+    // Create the primary editor instance
     window.editor = CodeMirror.fromTextArea(editorTextarea, {
         mode:             initialMode,
         theme:            'dracula',
@@ -45,6 +45,20 @@ $(function () {
         autofocus:        true
     });
 
+    // Create the secondary editor instance (for split view)
+    var editorTextarea2 = document.getElementById('codeEditor2');
+    window.editor2 = CodeMirror.fromTextArea(editorTextarea2, {
+        mode:             'python',
+        theme:            'dracula',
+        lineNumbers:      true,
+        matchBrackets:    true,
+        autoCloseBrackets: true,
+        indentUnit:       4,
+        tabSize:          4,
+        indentWithTabs:   false,
+        lineWrapping:     true
+    });
+
     // If a snippet was loaded from server, set code (Jinja injects SNIPPET_CODE)
     if (window.SNIPPET_CODE && window.SNIPPET_CODE.trim() !== '') {
         editor.setValue(window.SNIPPET_CODE);
@@ -55,11 +69,20 @@ $(function () {
     // ----------------------------------------------------------------
     editor.on('change', function () {
         $('#lineCount').text(editor.lineCount());
-
-        // Update tab filename display as user types
         var fname = $('#filenameInput').val().trim();
         $('#tabFilename').text(fname || 'untitled');
     });
+
+    editor2.on('change', function () {
+        // Line count reflects the active editor
+        if ($('#secondaryPane').is(':visible')) {
+            $('#lineCount').text(editor2.lineCount());
+        }
+    });
+
+    // Focus tracking for line count
+    editor.on('focus', function() { $('#lineCount').text(editor.lineCount()); });
+    editor2.on('focus', function() { $('#lineCount').text(editor2.lineCount()); });
 
     // Set initial line count
     $('#lineCount').text(editor.lineCount());
@@ -95,8 +118,9 @@ $(function () {
 
     // Also update tab filename when user types in filename input
     $('#filenameInput').on('input', function () {
-        var fname = $(this).val().trim();
-        $('#tabFilename').text(fname || 'untitled');
+        var fname = $(this).val().trim() || 'untitled';
+        $('#tabFilename').text(fname);
+        $('#primaryBreadcrumbFile').text(fname);
     });
 
 
@@ -202,9 +226,11 @@ $(function () {
 
 
     // ================================================================
-    // 6. CLEAR BUTTON (Acts as "New File")
+    // 6. CLEAR BUTTON & NEW FILE WORKFLOW
     // ================================================================
-    $('#clearBtn').on('click', function () {
+    
+    // Function to initialize a new file state
+    function createNewFile(defaultFilename = 'untitled.py') {
         // Clear the editor content
         editor.setValue('');
         editor.clearHistory();
@@ -216,9 +242,10 @@ $(function () {
         
         $('#webPreview').addClass('d-none').attr('srcdoc', '');
 
-        // Clear filename input
-        $('#filenameInput').val('');
-        $('#tabFilename').text('untitled');
+        // Set filename and trigger extension update
+        $('#filenameInput').val(defaultFilename);
+        $('#tabFilename').text(defaultFilename);
+        $('#primaryBreadcrumbFile').text(defaultFilename);
 
         // Reset URL (remove ?id=) to indicate a NEW unsaved file
         const url = new URL(window.location);
@@ -228,8 +255,59 @@ $(function () {
         // Hide any validation alert
         $('#validationAlert').addClass('d-none');
 
+        // Infer language from extension
+        updateLanguageFromExtension(defaultFilename);
+
         setStatus('New File Ready');
         editor.focus();
+    }
+
+    // Helper to infer language from filename extension
+    function updateLanguageFromExtension(filename) {
+        if (!filename) return;
+        var ext = filename.split('.').pop().toLowerCase();
+        var extToLang = {
+            'py': 'python',
+            'js': 'javascript',
+            'html': 'html',
+            'htm': 'html',
+            'css': 'css'
+        };
+        var lang = extToLang[ext];
+        if (lang) {
+            $('#languageSelect').val(lang).trigger('change');
+        }
+    }
+
+    // New File Icon (Sidebar)
+    $('#newFileIcon').on('click', function() {
+        $('#modalFilenameInput').val('');
+        $('#modalFilenameError').addClass('d-none');
+        $('#newFileModal').modal('show');
+    });
+
+    // Confirm New File (Modal)
+    $('#confirmNewFileBtn').on('click', function() {
+        var filename = $('#modalFilenameInput').val().trim();
+        if (!filename) {
+            $('#modalFilenameError').removeClass('d-none');
+            return;
+        }
+        
+        $('#newFileModal').modal('hide');
+        createNewFile(filename);
+    });
+
+    // Handle 'Enter' in modal input
+    $('#modalFilenameInput').on('keypress', function(e) {
+        if (e.which == 13) {
+            $('#confirmNewFileBtn').trigger('click');
+        }
+    });
+
+    // Toolbar "Clear" acts as a quick reset to "untitled.py"
+    $('#clearBtn').on('click', function () {
+        createNewFile('untitled.py');
     });
 
 
@@ -244,7 +322,133 @@ $(function () {
 
 
     // ================================================================
-    // 8. COPY CODE BUTTON
+    // 8. SPLIT EDITOR TOGGLE
+    // ================================================================
+    $('#splitBtn, #closeRightPane').on('click', function () {
+        var secondaryPane = $('#secondaryPane');
+        var primaryPane = $('#primaryPane');
+        
+        if (secondaryPane.hasClass('d-none')) {
+            // SHOW SPLIT
+            secondaryPane.removeClass('d-none');
+            $('#splitBtn').addClass('active btn-warning').removeClass('btn-outline-warning');
+            $('#splitBtnText').text('Unsplit');
+            
+            // Sync current primary content to secondary if it's empty
+            if (!editor2.getValue().trim()) {
+                editor2.setValue(editor.getValue());
+                editor2.setOption('mode', editor.getOption('mode'));
+                $('#languageSelect2').val($('#languageSelect').val());
+                $('#tabFilename2').text($('#tabFilename').text());
+            }
+
+            // Refresh both to fix layout issues
+            setTimeout(function() {
+                editor.refresh();
+                editor2.refresh();
+            }, 100);
+        } else {
+            // HIDE SPLIT
+            secondaryPane.addClass('d-none');
+            $('#splitBtn').removeClass('active btn-warning').addClass('btn-outline-warning');
+            $('#splitBtnText').text('Split');
+            
+            setTimeout(function() {
+                editor.refresh();
+            }, 100);
+        }
+    });
+
+    // Open in right pane via sidebar button
+    $(document).on('click', '.open-right-pane-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        var code = $(this).data('code');
+        var lang = $(this).data('lang');
+        var filename = $(this).data('filename');
+
+        // Show pane if hidden
+        if ($('#secondaryPane').hasClass('d-none')) {
+            $('#splitBtn').trigger('click');
+        }
+
+        editor2.setValue(code);
+        editor2.setOption('mode', LANG_MODE_MAP[lang] || 'python');
+        $('#languageSelect2').val(lang);
+        $('#secondaryBreadcrumbFile').text(filename); // Update breadcrumb
+        
+        editor2.refresh();
+    });
+
+    // Run button for right pane
+    $('#runBtn2').on('click', function() {
+        var code = editor2.getValue();
+        var language = $('#languageSelect2').val();
+        runCodeLogic(code, language, "Output (Pane 2)");
+    });
+
+    // Refactored Run Logic
+    function runCodeLogic(code, language, label) {
+        if (!code.trim()) {
+            showAlert('Please write some code first.', 'warning');
+            return;
+        }
+
+        setRunLoading(true);
+        setStatus('Running…');
+        $('#outputLabel').text(label || "Output");
+
+        $.ajax({
+            url:         '/run',
+            method:      'POST',
+            contentType: 'application/json',
+            data:         JSON.stringify({ code: code, language: language }),
+            success: function (response) {
+                setRunLoading(false);
+                var outputEl = $('#output');
+                var previewEl = $('#webPreview');
+                
+                outputEl.removeClass('output-error output-success d-none').addClass('d-none');
+                previewEl.addClass('d-none');
+                
+                if (response.time_complexity && response.time_complexity !== "N/A") {
+                    $('#timeComp').text(response.time_complexity);
+                    $('#spaceComp').text(response.space_complexity);
+                    $('#timeCompContainer, #spaceCompContainer').show();
+                } else {
+                    $('#timeCompContainer, #spaceCompContainer').hide();
+                }
+
+                if (response.is_web) {
+                    previewEl.removeClass('d-none');
+                    previewEl.attr('srcdoc', response.web_code || '');
+                    setStatus('Preview Ready ✓');
+                } else if (response.error) {
+                    outputEl.removeClass('d-none').addClass('output-error');
+                    outputEl.html(escapeHtml(response.error));
+                    setStatus('Error');
+                } else if (response.output !== undefined) {
+                    outputEl.removeClass('d-none').addClass('output-success');
+                    outputEl.html(escapeHtml(response.output) || '<span class="text-muted">// (No output)</span>');
+                    setStatus('Done ✓');
+                }
+            },
+            error: function () {
+                setRunLoading(false);
+                $('#output').removeClass('output-success').addClass('output-error').html('Server error. Please try again.');
+                setStatus('Error');
+            }
+        });
+    }
+
+    // Update main run button to use refactored logic
+    $('#runBtn').off('click').on('click', function () {
+        runCodeLogic(editor.getValue(), $('#languageSelect').val(), "Output (Pane 1)");
+    });
+
+    // ================================================================
+    // 9. COPY CODE BUTTON
     // ================================================================
     $('#copyBtn').on('click', function () {
         var code = editor.getValue();
@@ -301,6 +505,82 @@ $(function () {
         $('.sidebar-file-link').removeClass('active-file');
         $(this).addClass('active-file');
         // Navigation to /?id=<x> happens via the href naturally
+    });
+
+
+    // ================================================================
+    // 11. EXPLORER TOGGLES (Expand/Collapse)
+    // ================================================================
+    $(document).on('click', '.folder-header, .folder-title', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        var $parent = $(this).closest('.explorer-folder, .folder-item');
+        var $list = $(this).next('ul');
+        var $icon = $(this).find('.bi-chevron-down, .bi-chevron-right');
+
+        if ($list.length === 0) {
+            // Find the list in the next sibling if not immediate
+            $list = $parent.find('> ul');
+        }
+
+        $list.slideToggle(150);
+        $parent.toggleClass('collapsed');
+
+        // Toggle icons
+        if ($icon.hasClass('bi-chevron-down')) {
+            $icon.removeClass('bi-chevron-down').addClass('bi-chevron-right');
+        } else {
+            $icon.removeClass('bi-chevron-right').addClass('bi-chevron-down');
+        }
+    });
+
+    // ================================================================
+    // 12. NEW FOLDER WORKFLOW
+    // ================================================================
+    $('#newFolderIcon').on('click', function() {
+        $('#modalFolderNameInput').val('');
+        $('#modalFolderNameError').addClass('d-none');
+        $('#newFolderModal').modal('show');
+    });
+
+    $('#confirmNewFolderBtn').on('click', function() {
+        var folderName = $('#modalFolderNameInput').val().trim();
+        if (!folderName) {
+            $('#modalFolderNameError').removeClass('d-none');
+            return;
+        }
+
+        $('#newFolderModal').modal('hide');
+        
+        // UI-only feedback (Create a temporary folder item)
+        var newFolderHtml = `
+            <li class="folder-item">
+                <div class="folder-title d-flex align-items-center px-2 py-1">
+                    <i class="bi bi-chevron-right me-1" style="font-size: 10px;"></i>
+                    <i class="bi bi-folder-fill me-2 text-primary"></i>
+                    <span class="small">${folderName} (new)</span>
+                </div>
+                <ul class="list-unstyled mb-0 ps-3" style="display:none;">
+                    <li class="text-muted small px-3 py-1">Empty</li>
+                </ul>
+            </li>
+        `;
+        
+        $('#projectRoot > ul').append(newFolderHtml);
+        setStatus(`Folder "${folderName}" created (UI only)`);
+    });
+
+    // Handle 'Enter' in folder modal
+    $('#modalFolderNameInput').on('keypress', function(e) {
+        if (e.which == 13) {
+            $('#confirmNewFolderBtn').trigger('click');
+        }
+    });
+
+    // Refresh Sidebar (Simple reload)
+    $('#refreshSidebarIcon').on('click', function() {
+        location.reload();
     });
 
 

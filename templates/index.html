@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}CodeEditor – Write &amp; Run Code{% endblock %}
+{% block title %}CodeEditor – Write & Run Code{% endblock %}
 
 {% block content %}
 <!--
     index.html – Main 3-panel editor layout (VS Code style)
-    Panels: Left Sidebar | Center Editor | Bottom Output
+    Panels: Left Sidebar | Center Editor(s) | Bottom Output
 -->
 
 <!-- Hidden save form (submitted via jQuery) -->
@@ -20,48 +20,79 @@
 <div class="editor-layout d-flex" style="height: calc(100vh - 110px);">
 
     <!-- --------------------------------------------------------
-         LEFT SIDEBAR – Saved Files
+         LEFT SIDEBAR – VS Code style Explorer
     -------------------------------------------------------- -->
     <aside class="sidebar d-flex flex-column border-end border-secondary">
-        <div class="sidebar-header p-2 border-bottom border-secondary">
+        <div class="sidebar-header p-2 border-bottom border-secondary d-flex align-items-center justify-content-between">
             <small class="text-uppercase text-muted fw-bold">
                 <i class="bi bi-folder2-open me-1"></i>Explorer
             </small>
+            <div class="sidebar-actions">
+                <i class="bi bi-file-earmark-plus me-1" id="newFileIcon" title="New File" style="cursor:pointer; font-size: 12px;"></i>
+                <i class="bi bi-folder-plus me-1" id="newFolderIcon" title="New Folder" style="cursor:pointer; font-size: 12px;"></i>
+                <i class="bi bi-arrow-clockwise" id="refreshSidebarIcon" title="Refresh" style="cursor:pointer; font-size: 12px;"></i>
+            </div>
         </div>
-        <nav class="sidebar-files flex-grow-1 overflow-auto p-1">
-            {% if all_snippets %}
-                <ul class="list-unstyled mb-0">
-                    {% for s in all_snippets %}
-                    <li>
-                        <a href="{{ url_for('index', id=s.id) }}"
-                           class="sidebar-file-link d-flex align-items-center px-2 py-1 rounded text-decoration-none
-                                  {% if snippet and snippet.id == s.id %}active-file{% endif %}"
-                           title="{{ s.filename }} ({{ s.language }})">
-                            <!-- Language icon -->
-                            {% if s.language == 'python' %}
-                                <i class="bi bi-filetype-py me-2 text-warning"></i>
-                            {% elif s.language == 'javascript' %}
-                                <i class="bi bi-filetype-js me-2 text-warning"></i>
-                            {% elif s.language == 'html' %}
-                                <i class="bi bi-filetype-html me-2 text-danger"></i>
+        
+        <nav class="sidebar-files flex-grow-1 overflow-auto">
+            <!-- Project Root -->
+            <div class="explorer-folder open" id="projectRoot">
+                <div class="folder-header d-flex align-items-center px-2 py-1">
+                    <i class="bi bi-chevron-down me-1" style="font-size: 10px;"></i>
+                    <small class="text-uppercase fw-bold" style="font-size: 10px; color: #8e8e8e;">CODEEDITOR</small>
+                </div>
+                
+                <ul class="list-unstyled mb-0 explorer-list ps-3">
+                    <!-- Virtual "Saved Snippets" Folder -->
+                    <li class="folder-item">
+                        <div class="folder-title d-flex align-items-center px-2 py-1">
+                            <i class="bi bi-chevron-down me-1" style="font-size: 10px;"></i>
+                            <i class="bi bi-folder-fill me-2 text-primary"></i>
+                            <span class="small">Saved Snippets</span>
+                        </div>
+                        <ul class="list-unstyled mb-0 ps-3">
+                            {% if all_snippets %}
+                                {% for s in all_snippets %}
+                                <li>
+                                    <a href="{{ url_for('index', id=s.id) }}"
+                                       class="sidebar-file-link d-flex align-items-center px-2 py-1 rounded text-decoration-none
+                                              {% if snippet and snippet.id == s.id %}active-file{% endif %}"
+                                       title="{{ s.filename }}">
+                                        {% if s.language == 'python' %}
+                                            <i class="bi bi-filetype-py me-2 text-warning"></i>
+                                        {% elif s.language == 'javascript' %}
+                                            <i class="bi bi-filetype-js me-2 text-warning-emphasis"></i>
+                                        {% elif s.language == 'html' %}
+                                            <i class="bi bi-filetype-html me-2 text-danger"></i>
+                                        {% else %}
+                                            <i class="bi bi-filetype-css me-2 text-info"></i>
+                                        {% endif %}
+                                        <span class="text-truncate small">{{ s.filename }}</span>
+                                        <button class="btn btn-sm p-0 ms-auto open-right-pane-btn text-muted"
+                                                data-code="{{ s.code | e }}"
+                                                data-lang="{{ s.language }}"
+                                                data-filename="{{ s.filename }}"
+                                                title="Open in right pane"
+                                                onclick="event.preventDefault(); event.stopPropagation();">
+                                            <i class="bi bi-layout-split" style="font-size:11px;"></i>
+                                        </button>
+                                    </a>
+                                </li>
+                                {% endfor %}
                             {% else %}
-                                <i class="bi bi-filetype-css me-2 text-info"></i>
+                                <li class="text-muted small px-3 py-1">Empty</li>
                             {% endif %}
-                            <span class="text-truncate small">{{ s.filename }}</span>
-                        </a>
+                        </ul>
                     </li>
-                    {% endfor %}
+
+                    
                 </ul>
-            {% else %}
-                <p class="text-muted small text-center mt-3 px-2">
-                    No saved files yet.<br>Save a snippet to see it here.
-                </p>
-            {% endif %}
+            </div>
         </nav>
     </aside>
 
     <!-- --------------------------------------------------------
-         CENTER + BOTTOM: Editor Pane
+         CENTER + BOTTOM: Editor Pane(s)
     -------------------------------------------------------- -->
     <section class="editor-pane d-flex flex-column flex-grow-1 overflow-hidden">
 
@@ -69,7 +100,7 @@
         <div class="toolbar d-flex align-items-center gap-2 px-3 py-2 border-bottom border-secondary flex-wrap">
 
             <!-- File name input -->
-            <div class="input-group input-group-sm" style="max-width:220px;">
+            <div class="input-group input-group-sm" style="max-width:200px;">
                 <span class="input-group-text bg-dark border-secondary text-muted">
                     <i class="bi bi-file-earmark-code"></i>
                 </span>
@@ -84,7 +115,7 @@
             <!-- Language selector -->
             <select id="languageSelect"
                     class="form-select form-select-sm bg-dark border-secondary text-light"
-                    style="max-width:150px;">
+                    style="max-width:130px;">
                 <option value="python"     {% if snippet and snippet.language == 'python'     %}selected{% endif %}>Python</option>
                 <option value="javascript" {% if snippet and snippet.language == 'javascript' %}selected{% endif %}>JavaScript</option>
                 <option value="html"       {% if snippet and snippet.language == 'html'       %}selected{% endif %}>HTML</option>
@@ -111,6 +142,14 @@
                 <i class="bi bi-x-circle"></i> Clear
             </button>
 
+            <!-- Split Editor toggle button -->
+            <button id="splitBtn"
+                    class="btn btn-sm btn-outline-warning d-flex align-items-center gap-1"
+                    title="Toggle Split Editor">
+                <i class="bi bi-layout-split"></i>
+                <span id="splitBtnText">Split</span>
+            </button>
+
             <button id="copyBtn"
                     class="btn btn-sm btn-outline-info d-flex align-items-center gap-1 ms-auto"
                     title="Copy code to clipboard">
@@ -126,18 +165,70 @@
             <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
         </div>
 
-        <!-- ---- EDITOR + LINE INFO BAR ---- -->
-        <div class="flex-grow-1 overflow-hidden position-relative">
-            <!-- Tab bar (cosmetic, like VS Code) -->
-            <div class="editor-tab-bar d-flex align-items-center px-3 border-bottom border-secondary">
-                <span class="editor-tab active-tab small px-3 py-1">
-                    <i class="bi bi-circle-fill me-1 text-warning" style="font-size:6px;vertical-align:middle;"></i>
-                    <span id="tabFilename">{{ snippet.filename if snippet else 'untitled.py' }}</span>
-                </span>
+        <!-- ---- DUAL EDITOR PANES ---- -->
+        <div id="editorsContainer" class="flex-grow-1 overflow-hidden d-flex" style="min-height:0;">
+
+            <!-- ===== LEFT / PRIMARY EDITOR ===== -->
+            <div id="primaryPane" class="d-flex flex-column flex-grow-1 overflow-hidden border-end border-secondary" style="min-width:0;">
+                <!-- Tab bar -->
+                <div class="editor-tab-bar d-flex align-items-center px-3 border-bottom border-secondary">
+                    <span class="editor-tab active-tab small px-3 py-1">
+                        <i class="bi bi-circle-fill me-1 text-warning" style="font-size:6px;vertical-align:middle;"></i>
+                        <span id="tabFilename">{{ snippet.filename if snippet else 'untitled.py' }}</span>
+                    </span>
+                </div>
+                <!-- Breadcrumbs -->
+                <div class="breadcrumbs border-bottom border-secondary px-3 py-1 small text-muted d-flex align-items-center">
+                    <span class="breadcrumb-item">CODEEDITOR</span>
+                    <i class="bi bi-chevron-right mx-1" style="font-size: 8px;"></i>
+                    <span class="breadcrumb-item" id="primaryBreadcrumbFolder">Saved Snippets</span>
+                    <i class="bi bi-chevron-right mx-1" style="font-size: 8px;"></i>
+                    <span class="breadcrumb-item text-light" id="primaryBreadcrumbFile">{{ snippet.filename if snippet else 'untitled.py' }}</span>
+                </div>
+                <!-- CodeMirror textarea -->
+                <textarea id="codeEditor">{{ snippet.code if snippet else '' }}</textarea>
             </div>
 
-            <!-- CodeMirror textarea -->
-            <textarea id="codeEditor">{{ snippet.code if snippet else '' }}</textarea>
+            <!-- ===== RIGHT / SECONDARY EDITOR (hidden by default) ===== -->
+            <div id="secondaryPane" class="d-flex flex-column flex-grow-1 overflow-hidden d-none" style="min-width:0;">
+                <!-- Tab bar -->
+                <div class="editor-tab-bar border-bottom border-secondary d-flex align-items-center">
+                    <div class="editor-tab active-tab px-3 py-1">
+                        <i class="bi bi-filetype-py me-2 text-warning" id="leftTabIcon"></i>
+                        <span id="leftTabName">untitled.py</span>
+                        <i class="bi bi-x ms-2" style="font-size: 14px;"></i>
+                    </div>
+                </div>
+
+                <!-- Breadcrumbs -->
+                <div class="breadcrumbs border-bottom border-secondary px-3 py-1 small text-muted d-flex align-items-center">
+                    <span class="breadcrumb-item">CODEEDITOR</span>
+                    <i class="bi bi-chevron-right mx-1" style="font-size: 8px;"></i>
+                    <span class="breadcrumb-item" id="secondaryBreadcrumbFolder">Saved Snippets</span>
+                    <i class="bi bi-chevron-right mx-1" style="font-size: 8px;"></i>
+                    <span class="breadcrumb-item text-light" id="secondaryBreadcrumbFile">untitled.py</span>
+                </div>
+                <!-- Mini toolbar for right pane -->
+                <div class="d-flex align-items-center px-2 py-1 border-bottom border-secondary gap-2">
+                    <select id="languageSelect2"
+                            class="form-select form-select-sm bg-dark border-secondary text-light ms-auto"
+                            style="max-width:110px; font-size:11px;">
+                        <option value="python">Python</option>
+                        <option value="javascript">JavaScript</option>
+                        <option value="html">HTML</option>
+                        <option value="css">CSS</option>
+                    </select>
+                    <button id="runBtn2" class="btn btn-sm btn-success py-0 px-2" title="Run right pane code" style="font-size:11px;">
+                        <i class="bi bi-play-fill"></i> Run
+                    </button>
+                    <button id="closeRightPane" class="btn btn-sm btn-outline-secondary py-0 px-1 ms-1" title="Close split view" style="font-size:11px;">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+                <!-- CodeMirror textarea for right pane -->
+                <textarea id="codeEditor2"></textarea>
+            </div>
+
         </div>
 
         <!-- ---- STATUS BAR (VS Code-style bottom bar) ---- -->
@@ -163,7 +254,7 @@
         <section class="output-panel border-top border-secondary">
             <div class="output-header d-flex align-items-center px-3 py-1 border-bottom border-secondary">
                 <small class="text-uppercase text-muted fw-bold me-auto">
-                    <i class="bi bi-terminal me-1"></i>Output
+                    <i class="bi bi-terminal me-1"></i><span id="outputLabel">Output</span>
                 </small>
                 <button id="clearOutputBtn"
                         class="btn btn-sm btn-link text-muted p-0"
@@ -181,15 +272,66 @@
     </section><!-- end .editor-pane -->
 </div><!-- end .editor-layout -->
 
+<!-- ============================================================
+     MODALS
+============================================================ -->
+
+<!-- New File Modal -->
+<div class="modal fade" id="newFileModal" tabindex="-1" aria-labelledby="newFileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title" id="newFileModalLabel">
+                    <i class="bi bi-file-earmark-plus me-2 text-primary"></i>New File
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="modalFilenameInput" class="form-label small text-muted">File Name</label>
+                    <input type="text" class="form-control bg-dark text-light border-secondary" id="modalFilenameInput" placeholder="e.g., main.py" maxlength="100">
+                    <div id="modalFilenameError" class="text-danger small mt-1 d-none">Please enter a valid filename.</div>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-sm btn-primary" id="confirmNewFileBtn">Create File</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Folder Modal -->
+<div class="modal fade" id="newFolderModal" tabindex="-1" aria-labelledby="newFolderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title" id="newFolderModalLabel">
+                    <i class="bi bi-folder-plus me-2 text-primary"></i>New Folder
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="modalFolderNameInput" class="form-label small text-muted">Folder Name</label>
+                    <input type="text" class="form-control bg-dark text-light border-secondary" id="modalFolderNameInput" placeholder="e.g., components" maxlength="100">
+                    <div id="modalFolderNameError" class="text-danger small mt-1 d-none">Please enter a valid folder name.</div>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-sm btn-primary" id="confirmNewFolderBtn">Create Folder</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 
 {% block scripts %}
 <script>
-    /* ------------------------------------------------------------------
-       Inline: pass Jinja2 snippet data to script.js cleanly via JSON
-    ------------------------------------------------------------------ */
-    window.SNIPPET_CODE = {{ (snippet.code | tojson) if snippet else '""' }};
-    window.SNIPPET_LANG = {{ (snippet.language | tojson) if snippet else '"python"' }};
+    window.SNIPPET_CODE = {{ (snippet.code | tojson) if snippet else '""' | safe }};
+    window.SNIPPET_LANG = {{ (snippet.language | tojson) if snippet else '"python"' | safe }};
 </script>
 {% endblock %}

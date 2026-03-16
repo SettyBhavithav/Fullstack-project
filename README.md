@@ -4,7 +4,7 @@ A fully functional, browser-based code editor built with **Flask** and **CodeMir
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
 | Editor (3-Panel Layout) | Saved Snippets Page |
 |---|---|
@@ -12,14 +12,14 @@ A fully functional, browser-based code editor built with **Flask** and **CodeMir
 
 ---
 
-## 🔑 Demo Account
+## Demo Account
 To test the application quickly, you can use these test credentials:
 - **Username**: `valid_user`
 - **Password**: `password123`
 
 ---
 
-## 📝 Step-by-Step Usage Guide
+##  Step-by-Step Usage Guide
 
 ### 1. Register an Account
 Create a new account to get your own private space for saving code snippets.

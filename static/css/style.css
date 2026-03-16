@@ -81,6 +81,20 @@ main {
     color: #ffffff;
 }
 
+/* Open in right pane icon in sidebar */
+.open-right-pane-btn {
+    opacity: 0;
+    transition: opacity 0.2s, color 0.2s;
+}
+
+.sidebar-file-link:hover .open-right-pane-btn {
+    opacity: 1;
+}
+
+.open-right-pane-btn:hover {
+    color: #9cdcfe !important;
+}
+
 .sidebar-files {
     scrollbar-width: thin;
     scrollbar-color: #424242 #252526;
@@ -95,29 +109,81 @@ main {
 }
 
 /* ======================================================================
-   6. EDITOR TAB BAR (cosmetic VS Code-like tabs)
+   6. EDITOR TAB BAR & BREADCRUMBS
 ====================================================================== */
 .editor-tab-bar {
     background-color: #2d2d30;
     height: 35px;
-    overflow-x: auto;
-    white-space: nowrap;
+    display: flex;
+    align-items: center;
 }
 
 .editor-tab {
     display: inline-flex;
     align-items: center;
-    color: #9d9d9d;
-    font-size: 0.8rem;
-    border-right: 1px solid #3f3f46;
+    color: #969696;
+    font-size: 0.75rem;
+    border-right: 1px solid #252526;
+    background-color: #2d2d30;
     cursor: pointer;
     transition: background-color 0.15s;
+    height: 100%;
 }
 
 .active-tab {
     background-color: #1e1e1e;
-    color: #d4d4d4;
-    border-top: 1px solid #007acc;
+    color: #ffffff;
+}
+
+/* Breadcrumbs (VS Code style under tab bar) */
+.breadcrumbs {
+    background-color: #1e1e1e;
+    font-size: 11px;
+    color: #9d9d9d;
+    padding: 2px 16px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.breadcrumb-item:hover {
+    color: #ffffff;
+    cursor: pointer;
+}
+
+/* ======================================================================
+   6.1 EXPLORER STYLING
+====================================================================== */
+.sidebar-actions i:hover {
+    color: #ffffff;
+}
+
+.explorer-folder {
+    margin-bottom: 2px;
+}
+
+.folder-header {
+    cursor: pointer;
+    background-color: #252526;
+    transition: background-color 0.1s;
+}
+
+.folder-header:hover {
+    background-color: #2a2d2e;
+}
+
+.folder-title {
+    cursor: pointer;
+    transition: background-color 0.1s;
+}
+
+.folder-title:hover {
+    background-color: #2a2d2e;
+}
+
+.explorer-list {
+    border-left: 1px solid #333;
+    margin-left: 12px;
 }
 
 /* ======================================================================

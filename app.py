@@ -46,6 +46,9 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(200), nullable=False)
     snippets = db.relationship('Snippet', backref='author', lazy=True)
 
+    def __init__(self, username):
+        self.username = username
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
@@ -61,6 +64,12 @@ class Snippet(db.Model):
     code = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    def __init__(self, filename, language, code, user_id):
+        self.filename = filename
+        self.language = language
+        self.code = code
+        self.user_id = user_id
 
     def __repr__(self):
         return f'<Snippet {self.filename} ({self.language})>'
