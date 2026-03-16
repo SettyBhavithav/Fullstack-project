@@ -277,12 +277,14 @@ def delete_snippet(snippet_id):
 # ---------------------------------------------------------------------------
 # Entry Point
 # ---------------------------------------------------------------------------
-if __name__ == '__main__':
+with app.app_context():
     # Auto-create database tables if they don't exist
-    with app.app_context():
-        # Note: In a real app, migrating DB would be better than create_all.
-        # This will add missing tables like 'user'.
-        db.create_all()
-        print("Database tables created (or already exist).")
+    db.create_all()
+    print("Database tables ensured.")
+
+# ---------------------------------------------------------------------------
+# Entry Point
+# ---------------------------------------------------------------------------
+if __name__ == '__main__':
     print("Starting CodeEditor on http://localhost:5000")
     app.run(debug=True)
