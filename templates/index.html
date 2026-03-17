@@ -2,26 +2,15 @@
 {% block title %}CodeEditor – Write & Run Code{% endblock %}
 
 {% block content %}
-<!--
-    index.html – Main 3-panel editor layout (VS Code style)
-    Panels: Left Sidebar | Center Editor(s) | Bottom Output
--->
 
-<!-- Hidden save form (submitted via jQuery) -->
 <form id="saveForm" method="POST" action="{{ url_for('save_snippet') }}" style="display:none;">
     <input type="hidden" name="filename" id="hiddenFilename" />
     <input type="hidden" name="language" id="hiddenLanguage" />
     <input type="hidden" name="code"     id="hiddenCode"     />
 </form>
 
-<!-- ============================================================
-     EDITOR LAYOUT WRAPPER
-============================================================ -->
 <div class="editor-layout d-flex" style="height: calc(100vh - 110px);">
 
-    <!-- --------------------------------------------------------
-         LEFT SIDEBAR – VS Code style Explorer
-    -------------------------------------------------------- -->
     <aside class="sidebar d-flex flex-column border-end border-secondary">
         <div class="sidebar-header p-2 border-bottom border-secondary d-flex align-items-center justify-content-between">
             <small class="text-uppercase text-muted fw-bold">
@@ -43,7 +32,6 @@
                 </div>
                 
                 <ul class="list-unstyled mb-0 explorer-list ps-3">
-                    <!-- Virtual "Saved Snippets" Folder -->
                     <li class="folder-item">
                         <div class="folder-title d-flex align-items-center px-2 py-1">
                             <i class="bi bi-chevron-down me-1" style="font-size: 10px;"></i>
@@ -91,12 +79,8 @@
         </nav>
     </aside>
 
-    <!-- --------------------------------------------------------
-         CENTER + BOTTOM: Editor Pane(s)
-    -------------------------------------------------------- -->
     <section class="editor-pane d-flex flex-column flex-grow-1 overflow-hidden">
 
-        <!-- ---- TOOLBAR ---- -->
         <div class="toolbar d-flex align-items-center gap-2 px-3 py-2 border-bottom border-secondary flex-wrap">
 
             <!-- File name input -->
@@ -158,14 +142,12 @@
             </button>
         </div>
 
-        <!-- ---- VALIDATION ALERT (hidden by default) ---- -->
         <div id="validationAlert" class="alert alert-warning alert-dismissible fade show m-2 py-2 d-none" role="alert">
             <i class="bi bi-exclamation-triangle-fill me-2"></i>
             <span id="validationMsg">Please enter a file name.</span>
             <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
         </div>
 
-        <!-- ---- DUAL EDITOR PANES ---- -->
         <div id="editorsContainer" class="flex-grow-1 overflow-hidden d-flex" style="min-height:0;">
 
             <!-- ===== LEFT / PRIMARY EDITOR ===== -->
@@ -231,7 +213,6 @@
 
         </div>
 
-        <!-- ---- STATUS BAR (VS Code-style bottom bar) ---- -->
         <div class="status-bar d-flex align-items-center px-3 gap-3 border-top border-secondary">
             <small class="text-muted">
                 <i class="bi bi-list-ol me-1"></i>
@@ -250,7 +231,6 @@
             </small>
         </div>
 
-        <!-- ---- OUTPUT PANEL ---- -->
         <section class="output-panel border-top border-secondary">
             <div class="output-header d-flex align-items-center px-3 py-1 border-bottom border-secondary">
                 <small class="text-uppercase text-muted fw-bold me-auto">
@@ -272,9 +252,6 @@
     </section><!-- end .editor-pane -->
 </div><!-- end .editor-layout -->
 
-<!-- ============================================================
-     MODALS
-============================================================ -->
 
 <!-- New File Modal -->
 <div class="modal fade" id="newFileModal" tabindex="-1" aria-labelledby="newFileModalLabel" aria-hidden="true">

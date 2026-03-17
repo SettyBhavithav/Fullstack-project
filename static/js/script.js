@@ -1,7 +1,4 @@
-/**
- * script.js — jQuery interactions for the CodeEditor VS Code Clone
- * Handles: Run, Save, Clear, Copy, Line Count, Delete, Sidebar navigation
- */
+// script.js - Frontend logic for CodeEditor
 
 /* ======================================================================
    CodeMirror Editor Initialization
@@ -11,9 +8,7 @@ $(function () {
 
     'use strict';
 
-    // ----------------------------------------------------------------
-    // 1. Initialize CodeMirror
-    // ----------------------------------------------------------------
+    // Initialize CodeMirror
     var editorTextarea = document.getElementById('codeEditor');
 
     // Only initialize on the main editor page
@@ -64,9 +59,7 @@ $(function () {
         editor.setValue(window.SNIPPET_CODE);
     }
 
-    // ----------------------------------------------------------------
-    // 2. Live line count updater
-    // ----------------------------------------------------------------
+    // Live line count updater
     editor.on('change', function () {
         $('#lineCount').text(editor.lineCount());
         var fname = $('#filenameInput').val().trim();
@@ -88,9 +81,7 @@ $(function () {
     $('#lineCount').text(editor.lineCount());
 
 
-    // ----------------------------------------------------------------
-    // 3. Language dropdown → change CodeMirror mode + update filename extension
-    // ----------------------------------------------------------------
+    // Language dropdown handlers
     $('#languageSelect').on('change', function () {
         var selectedLang = $(this).val();
         var newMode = LANG_MODE_MAP[selectedLang] || 'python';
@@ -124,9 +115,7 @@ $(function () {
     });
 
 
-    // ================================================================
-    // 4. RUN BUTTON
-    // ================================================================
+    // Run Button
     $('#runBtn').on('click', function () {
         var code = editor.getValue();
         var language = $('#languageSelect').val();
@@ -196,9 +185,7 @@ $(function () {
     });
 
 
-    // ================================================================
-    // 5. SAVE BUTTON
-    // ================================================================
+    // Save Button
     $('#saveBtn').on('click', function () {
         var filename = $('#filenameInput').val().trim();
         var language = $('#languageSelect').val();
@@ -225,9 +212,7 @@ $(function () {
     });
 
 
-    // ================================================================
-    // 6. CLEAR BUTTON & NEW FILE WORKFLOW
-    // ================================================================
+    // Clear & New File Workflow
     
     // Function to initialize a new file state
     function createNewFile(defaultFilename = 'untitled.py') {
@@ -311,9 +296,7 @@ $(function () {
     });
 
 
-    // ================================================================
-    // 7. CLEAR OUTPUT BUTTON (trash icon in output header)
-    // ================================================================
+    // Clear Output
     $('#clearOutputBtn').on('click', function () {
         $('#output')
             .removeClass('output-error output-success')
@@ -321,9 +304,7 @@ $(function () {
     });
 
 
-    // ================================================================
-    // 8. SPLIT EDITOR TOGGLE
-    // ================================================================
+    // Split Editor
     $('#splitBtn, #closeRightPane').on('click', function () {
         var secondaryPane = $('#secondaryPane');
         var primaryPane = $('#primaryPane');
@@ -447,9 +428,7 @@ $(function () {
         runCodeLogic(editor.getValue(), $('#languageSelect').val(), "Output (Pane 1)");
     });
 
-    // ================================================================
-    // 9. COPY CODE BUTTON
-    // ================================================================
+    // Copy Code
     $('#copyBtn').on('click', function () {
         var code = editor.getValue();
 
@@ -474,10 +453,7 @@ $(function () {
     });
 
 
-    // ================================================================
-    // 9. DELETE BUTTONS on saved.html
-    //    (jQuery confirm dialog before submitting delete form)
-    // ================================================================
+    // Delete Confirmations
     // This works on the saved page where .delete-btn exists
     $(document).on('click', '.delete-btn', function (e) {
         e.preventDefault();
@@ -496,11 +472,7 @@ $(function () {
     });
 
 
-    // ================================================================
-    // 10. SIDEBAR FILE LINKS
-    //     Already handled via plain <a href> tags in the template.
-    //     This block adds a subtle highlight effect on click.
-    // ================================================================
+    // Sidebar Highlighting
     $(document).on('click', '.sidebar-file-link', function () {
         $('.sidebar-file-link').removeClass('active-file');
         $(this).addClass('active-file');
@@ -508,9 +480,7 @@ $(function () {
     });
 
 
-    // ================================================================
-    // 11. EXPLORER TOGGLES (Expand/Collapse)
-    // ================================================================
+    // Explorer Toggles
     $(document).on('click', '.folder-header, .folder-title', function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -535,9 +505,7 @@ $(function () {
         }
     });
 
-    // ================================================================
-    // 12. NEW FOLDER WORKFLOW
-    // ================================================================
+    // New Folder Workflow
     $('#newFolderIcon').on('click', function() {
         $('#modalFolderNameInput').val('');
         $('#modalFolderNameError').addClass('d-none');
@@ -584,9 +552,7 @@ $(function () {
     });
 
 
-    // ================================================================
-    // UTILITY FUNCTIONS
-    // ================================================================
+    // Utilities
 
     /**
      * Show/hide the loading spinner on the Run button.

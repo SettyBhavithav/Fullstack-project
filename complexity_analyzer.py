@@ -37,7 +37,7 @@ class TimeComplexityVisitor(ast.NodeVisitor):
 
 class SpaceComplexityVisitor(ast.NodeVisitor):
     def __init__(self):
-        self.space_complexity = 0 # 0: O(1), 1: O(N), 2: O(N^2)
+        self.space_complexity = 0
         self.in_loop = False
         self.nesting_level = 0
 
@@ -58,17 +58,14 @@ class SpaceComplexityVisitor(ast.NodeVisitor):
             self.in_loop = False
 
     def visit_List(self, node):
-        # List literal []
         self._check_allocation()
         self.generic_visit(node)
 
     def visit_Dict(self, node):
-        # Dict literal {}
         self._check_allocation()
         self.generic_visit(node)
 
     def visit_Set(self, node):
-        # Set literal {1, 2}
         self._check_allocation()
         self.generic_visit(node)
 
@@ -81,7 +78,6 @@ class SpaceComplexityVisitor(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_Call(self, node):
-        # Check for list(), dict(), set() or append()
         if isinstance(node.func, ast.Name):
             if node.func.id in ['list', 'dict', 'set']:
                 self._check_allocation()
@@ -91,7 +87,6 @@ class SpaceComplexityVisitor(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_AugAssign(self, node):
-        # res += [item] grows space
         if isinstance(node.op, ast.Add):
             self._check_allocation()
         self.generic_visit(node)
@@ -101,15 +96,10 @@ class SpaceComplexityVisitor(ast.NodeVisitor):
             # Allocation inside a loop implies space grows with N
             self.space_complexity = max(self.space_complexity, self.nesting_level)
         else:
-            # Single allocation outside loop is usually constant O(1) in terms of N
-            # But for simple heuristic, we'll call it O(1) unless it's a dynamic structure
             pass
 
 def analyze_python_complexity(code_string):
-    """
-    Estimates Time and Space Complexity of Python code using simple AST heuristics.
-    Returns a tuple: (time_complexity, space_complexity)
-    """
+    """Estimates Time and Space Complexity of Python code using AST heuristics."""
     try:
         tree = ast.parse(code_string)
         

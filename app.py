@@ -1,7 +1,4 @@
-"""
-app.py - Main Flask application for the Browser-Based Code Editor
-A VS Code-like editor with code execution, saving, and snippet management.
-"""
+# app.py - Main Flask application for CodeEditor
 
 import os
 import subprocess
@@ -14,15 +11,11 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 import complexity_analyzer
 
-# ---------------------------------------------------------------------------
 # App Configuration
-# ---------------------------------------------------------------------------
 app = Flask(__name__)
 
-# Use environment variable for secret key in production
 app.secret_key = os.environ.get('SECRET_KEY', 'super-secret-key-codeeditor-2024')
 
-# Use environment variable for database URL (PostgreSQL) or fallback to local SQLite
 database_url = os.environ.get('DATABASE_URL')
 if database_url and database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
@@ -36,11 +29,8 @@ login_manager.login_view = 'login'
 login_manager.init_app(app)
 
 
-# ---------------------------------------------------------------------------
 # Database Models
-# ---------------------------------------------------------------------------
 class User(UserMixin, db.Model):
-    """User model for authentication."""
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
@@ -57,7 +47,6 @@ class User(UserMixin, db.Model):
 
 
 class Snippet(db.Model):
-    """Represents a saved code snippet in the database."""
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     filename = db.Column(db.String(100), nullable=False)
     language = db.Column(db.String(50), nullable=False)
@@ -80,9 +69,7 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
-# ---------------------------------------------------------------------------
 # Auth Routes
-# ---------------------------------------------------------------------------
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -141,24 +128,17 @@ def logout():
     return redirect(url_for('login'))
 
 
-# ---------------------------------------------------------------------------
 # Editor Routes
-# ---------------------------------------------------------------------------
 
 @app.route('/', methods=['GET'])
 @login_required
 def index():
-    """
-    Main editor page.
-    If ?id= query parameter is provided, load that snippet from DB
-    and pre-populate the editor.
-    """
+    """Main editor page."""
     snippet = None
     snippet_id = request.args.get('id')
     if snippet_id:
         snippet = Snippet.query.filter_by(id=snippet_id, user_id=current_user.id).first()
 
-    # Load all saved snippets for the sidebar (user specific)
     all_snippets = Snippet.query.filter_by(user_id=current_user.id).order_by(Snippet.created_at.desc()).all()
     return render_template('index.html', snippet=snippet, all_snippets=all_snippets)
 
@@ -166,32 +146,24 @@ def index():
 @app.route('/run', methods=['POST'])
 @login_required
 def run_code():
-    """
-    Execute submitted code using subprocess in a temp file.
-    Returns JSON with stdout, stderr, and code complexity metrics.
-    Security: max 5000 chars, 5-second timeout, temp file cleanup.
-    """
+    """Execute submitted code and return results."""
     data = request.get_json()
     code = data.get('code', '')
     language = data.get('language', 'python')
 
-    # Security: enforce max code length
     if len(code) > 5000:
         return jsonify({'error': 'Code exceeds 5000 character limit.'}), 400
 
-    # Map languages to execution commands and extensions
     lang_configs = {
         'python': {'cmd': ['python'], 'ext': '.py'},
         'javascript': {'cmd': ['node'], 'ext': '.js'}
     }
 
-    # Calculate complexity (Python only via AST)
     time_comp = "N/A"
     space_comp = "N/A"
     if language == 'python' and code.strip():
         time_comp, space_comp = complexity_analyzer.analyze_python_complexity(code)
 
-    # Handle HTML/CSS (Preview and return early)
     if language in ['html', 'css']:
         return jsonify({
             'output': '', 'error': '', 'is_web': True,
@@ -199,7 +171,6 @@ def run_code():
             'time_complexity': time_comp, 'space_complexity': space_comp
         })
 
-    # For Executable languages (Python, JS)
     config = lang_configs.get(language)
     if not config:
         return jsonify({
@@ -209,14 +180,12 @@ def run_code():
 
     tmp_path = None
     try:
-        # Write code to a temporary file
         with tempfile.NamedTemporaryFile(
             mode='w', suffix=config['ext'], delete=False, encoding='utf-8'
         ) as tmp_file:
             tmp_file.write(code)
             tmp_path = tmp_file.name
 
-        # Execute the temp file with a 5-second timeout
         result = subprocess.run(
             config['cmd'] + [tmp_path],
             capture_output=True,
@@ -238,7 +207,6 @@ def run_code():
         return jsonify({'output': '', 'error': f'Execution error: {str(e)}', 'is_web': False, 'time_complexity': time_comp, 'space_complexity': space_comp}), 500
 
     finally:
-        # Always clean up the temporary file
         if tmp_path and os.path.exists(tmp_path):
             os.remove(tmp_path)
 
@@ -246,16 +214,11 @@ def run_code():
 @app.route('/save', methods=['POST'])
 @login_required
 def save_snippet():
-    """
-    Save a code snippet to the database.
-    Receives form data: filename, language, code.
-    Redirects to /saved on success.
-    """
+    """Save a code snippet."""
     filename = request.form.get('filename', '').strip()
     language = request.form.get('language', 'python')
     code = request.form.get('code', '')
 
-    # Basic validation
     if not filename:
         return redirect(url_for('index'))
 
@@ -277,9 +240,7 @@ def save_snippet():
 @app.route('/saved', methods=['GET'])
 @login_required
 def saved():
-    """
-    Display all saved snippets in a table for the current user.
-    """
+    """Display all saved snippets."""
     snippets = Snippet.query.filter_by(user_id=current_user.id).order_by(Snippet.created_at.desc()).all()
     return render_template('saved.html', snippets=snippets)
 
@@ -287,19 +248,14 @@ def saved():
 @app.route('/delete/<int:snippet_id>', methods=['POST'])
 @login_required
 def delete_snippet(snippet_id):
-    """
-    Delete a snippet by its ID (must belong to current user).
-    Redirects to /saved after deletion.
-    """
+    """Delete a snippet."""
     snippet = Snippet.query.filter_by(id=snippet_id, user_id=current_user.id).first_or_404()
     db.session.delete(snippet)
     db.session.commit()
     return redirect(url_for('saved'))
 
 
-# ---------------------------------------------------------------------------
-# DB Init + Entry Point
-# ---------------------------------------------------------------------------
+# Entry Point
 with app.app_context():
     db.create_all()
     print("Database tables ensured.")
